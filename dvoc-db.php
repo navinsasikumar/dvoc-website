@@ -61,13 +61,16 @@ function dvoc_create_officers_table() {
     $charset_collate = $wpdb->get_charset_collate();
 
     $sql = "CREATE TABLE $table_name (
-        year smallint(4),
+        id mediumint(6) NOT NULL AUTO_INCREMENT,
+	start_date datetime,
+	end_date datetime,
         president mediumint(6),
         vice_president mediumint(6),
         secretary mediumint(6),
         treasurer mediumint(6),
         editor mediumint(6),
-        council mediumint(6)
+        council mediumint(6),
+        UNIQUE KEY id (id)
     ) $charset_collate;";
 
     dbDelta($sql);
@@ -80,11 +83,13 @@ function dvoc_create_awards_table() {
     $charset_collate = $wpdb->get_charset_collate();
 
     $sql = "CREATE TABLE $table_name (
-        year smallint(4),
+        id mediumint(6) NOT NULL AUTO_INCREMENT,
+	year smallint(4),
         devoc mediumint(6),
         stone mediumint(6),
         edge mediumint(6),
-        potter mediumint(6)
+        potter mediumint(6),
+        UNIQUE KEY id (id)
     ) $charset_collate;";
 
     dbDelta($sql);
@@ -112,10 +117,13 @@ function dvoc_create_committee_members_table() {
     $charset_collate = $wpdb->get_charset_collate();
 
     $sql = "CREATE TABLE $table_name (
-        year smallint(4),
+        id mediumint(6) NOT NULL AUTO_INCREMENT,
+	start_date datetime,
+	end_date datetime,
         member_id mediumint(6) NOT NULL,
         committee_id smallint(3) NOT NULL,
-        chairperson tinyint(1)
+        chairperson tinyint(1),
+        UNIQUE KEY id (id)
     ) $charset_collate;";
 
     dbDelta($sql);
@@ -164,6 +172,8 @@ function dvoc_add_submenus() {
     add_submenu_page('dvoc-db', 'List Members', 'List Members', 'manage_options', 'dvoc-list-members', 'dvoc_list_members');
     add_submenu_page('dvoc-db', 'Add New Committee', 'Add New Committee', 'manage_options', 'dvoc-add-committee', 'dvoc_add_committee');
     add_submenu_page('dvoc-db', 'List Members', 'List Committees', 'manage_options', 'dvoc-list-committees', 'dvoc_list_committees');
+    add_submenu_page('dvoc-db', 'Officers', 'Officers', 'manage_options', 'dvoc-list-officers', 'dvoc_list_officers');
+    add_submenu_page('dvoc-db', 'Add Officers', 'Add Officers', 'manage_options', 'dvoc-edit-officers', 'dvoc_edit_officers');
 }
 
 add_action('admin_menu', 'dvoc_add_pages');
@@ -348,12 +358,31 @@ function dvoc_get_member_names($s) {
 
 }
 
-function dvoc_edit_member($memberId) {
+function dvoc_assemble_member_name($member) {
+    $name = '';
+    if (isset($member['first_name'])) {
+        $name .= $member['first_name'] . ' ';
+    }
+    if (isset($member['last_name'])) {
+        $name .= $member['last_name'] . ' ';
+    }
+    return $name;
+}
+
+function dvoc_get_member_from_id($memberId) {
+    if (!$memberId) {
+        return '';
+    }
+
     global $wpdb;
 
     $table_name = $wpdb->prefix . "dvoc_members";
     $result = $wpdb->get_row("SELECT id, first_name, last_name, email, bio, website, headline, start_date, end_date, status, fellow, life, honorary FROM $table_name WHERE id = $memberId", 'ARRAY_A');
+    return $result;
+}
 
+function dvoc_edit_member($memberId) {
+    $result = dvoc_get_member_from_id($memberId);
     ?>
     <div class="wrap">
         <h2>Edit Member</h2>
@@ -478,10 +507,11 @@ function dvoc_committee_display($results) {
                 echo "<div>";
                 echo "<div><h3>" . $committee['committee'] . "</h3></div>";
                 $members = dvoc_list_committee_members($committee['id']);
-                echo "<table><tr><th>Member</th><th>Year</th></tr>";
+                echo "<table><tr><th>Member</th><th>Start Date</th><th>End Date</th></tr>";
                 foreach($members as $member) {
-                    echo "<tr><td>" . $member['member_id'] . "</td>";
-                    echo "<td>" . $member['year'] . "</td></tr>";
+                    echo "<tr><td>" . $member['first_name'] . " " . $member['last_name']  . "</td>";
+                    echo "<td>" . $member['start_date'] . "</td>";
+                    echo "<td>" . $member['end_date'] . "</td></tr>";
                 }
                 echo "</table>";
                 echo "<div><a href=\"" . $editUrl . "\">Add Member</a></div>";
@@ -539,8 +569,9 @@ function dvoc_edit_committee($committeeId) {
         <form action="<?php echo admin_url('admin-post.php');?>" method="post" class="wpcf7-form mailchimp-ext-0.4.29">
             <input type="hidden" name="action" value="dvoc_add_committee_member"/>
             <input type="hidden" name="committeeId" value="<?php echo $result['id']?>"/>
-            <input type="hidden" name="memberId" id="dvoc-committe-member" value=""/>
-            <span class="wpcf7-form-control-wrap year"><input type="text" name="year" value="<?php echo date("Y"); ?>" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
+            <input type="hidden" name="memberId" id="dvoc-member-id" value=""/>
+            <span class="wpcf7-form-control-wrap startDate"><input type="text" name="startDate" value="<?php echo date("Y-m-d"); ?>" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
+            <span class="wpcf7-form-control-wrap endDate"><input type="text" name="endDate" value="" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
             <p><span class="wpcf7-form-control-wrap chairperson"><span class="wpcf7-form-control wpcf7-checkbox"><span class="wpcf7-list-item first last"><input type="checkbox" name="chairperson[]" value="Chairperson"> &nbsp;<span class="wpcf7-list-item-label">Chairperson</span></span></span></span></p>
             <p><input type="submit" value="Add Member" class="wpcf7-form-control wpcf7-submit"><img class="ajax-loader" src="http://dvoc.org/wp/wp-content/plugins/contact-form-7-mailchimp-extension/assets/images/fading-squares.gif" alt="Sending ..." style="visibility: hidden;"></p>
         </form>
@@ -556,7 +587,8 @@ function dvoc_add_committee_member() {
     $result = $wpdb->insert(
         $table_name,
         array(
-            'year' => $_POST['year'],
+            'start_date' => $_POST['startDate'],
+            'end_date' => isset($_POST['endDate']) ? $_POST['endDate'] : null,
             'committee_id' => $_POST['committeeId'],
             'member_id' => $_POST['memberId'],
             'chairperson' => isset($_POST['chairperson']) ? 1 : 0
@@ -573,8 +605,10 @@ function dvoc_add_committee_member() {
 function dvoc_list_committee_members($committeeId) {
     global $wpdb;
     $table_name = $wpdb->prefix . "dvoc_committee_members";
-
-    $results = $wpdb->get_results("SELECT year, committee_id, member_id, chairperson FROM $table_name WHERE committee_id = $committeeId", 'ARRAY_A');
+    $table_name_2 = $wpdb->prefix . "dvoc_members";
+	
+    $query = "SELECT a.start_date, a.end_date, a.committee_id, a.member_id, a.chairperson, b.first_name, b.last_name FROM $table_name AS a JOIN $table_name_2 AS b ON a.member_id = b.id WHERE a.committee_id = $committeeId";
+    $results = $wpdb->get_results($query, 'ARRAY_A');
     return $results;
 }
 
@@ -598,6 +632,251 @@ function dvoc_search_member_callback() {
     $results = json_encode($results);
     echo $results;
     wp_die();
+}
+
+function dvoc_list_member_committees($memberId) {
+    global $wpdb;
+    $table_name = $wpdb->prefix . "dvoc_committee_members";
+    $table_name_2 = $wpdb->prefix . "dvoc_committees";
+	
+    $query = "SELECT a.start_date, a.end_date, a.committee_id, a.member_id, a.chairperson, b.committee FROM $table_name AS a JOIN $table_name_2 AS b ON a.committee_id = b.id WHERE a.member_id = $memberId";
+    $results = $wpdb->get_results($query, 'ARRAY_A');
+    return $results;
+}
+
+function dvoc_get_all_member_info($firstName, $lastName) {
+    global $wpdb;
+    $table_name = $wpdb->prefix . "dvoc_members";
+
+    $result = $wpdb->get_row("SELECT id, first_name, last_name, email, bio, website, headline, start_date, end_date, status, fellow, life, honorary FROM $table_name WHERE first_name = '$firstName' AND last_name = '$lastName'", 'ARRAY_A');
+    $committees = dvoc_list_member_committees($result['id']);
+    $result['committees'] = $committees;
+    
+    return $result;
+}
+
+function dvoc_display_member_committees($member) {
+    $ret = "";
+    foreach($member['committees'] as $committee) {
+        $ret .= $committee['committee'] . "<br>";
+    }    
+    return $ret;
+}
+
+function dvoc_display_member_since($member) {
+    if ($member['status'] === 'active' && $member['start_date'] !== '0000-00-00 00:00:00') {
+        $displayDate = date('F d, Y', strtotime($member['start_date']));
+        return 'Member since: ' . $displayDate;
+    } else {
+        return '';
+    }
+}
+
+function dvoc_shortcode_member_info($atts) {
+    $args = shortcode_atts(
+        array(
+            'name' => 'none',
+            'field' => 'none'
+        ),
+        $atts
+    );
+ 
+    if ($args['name'] === 'none') {
+        $page = get_permalink();
+        $pos = strpos($page, 'membership/members/');
+        if ($pos >= 0) {
+            $startPos = $pos + 19;
+            $endNamePos = strpos($page, '/', $startPos);
+            $name = substr($page, $startPos, $endNamePos - $startPos);
+            list($firstName, $lastName) = explode('-', $name);
+        } else {
+            return '';
+        }
+    } else {
+        list($firstName, $lastName) = explode(' ', $args['name']);
+    }
+
+    $result = dvoc_get_all_member_info($firstName, $lastName);
+
+    if ($args['field'] === 'none') {
+        return json_encode($result);
+    } else if ($args['field'] === 'committees') {
+        return dvoc_display_member_committees($result);
+    } else if ($args['field'] === 'member-since') {
+        return dvoc_display_member_since($result);
+    } else if ($args['field'] === 'life' && $result['life']) {
+        return 'Life Member';
+    } else if ($args['field'] === 'honorary' && $result['honorary']) {
+        return 'Honorary Member';
+    } else if ($args['field'] === 'fellow' && $result['fellow']) {
+        return 'Fellow of the DVOC';
+    }
+
+    $ret = nl2br(stripslashes($result[$args['field']]));
+    $ret = make_clickable($ret);
+    return $ret;
+}
+
+add_shortcode('dvoc-member-info', 'dvoc_shortcode_member_info');
+
+function dvoc_officers_display($results) {
+    ?>
+    <div class="wrap">
+        <h2>DVOC Officers</h2>
+        <?php show_search_box('officers'); ?>
+        <?php
+            echo "<table>";
+            echo "<tr>";
+            echo "<th>Id</th>";
+            echo "<th>Start Date</th>";
+            echo "<th>End Date</th>";
+            echo "<th>President</th>";
+            echo "<th>Vice President</th>";
+            echo "<th>Secretary</th>";
+            echo "<th>Treasurer</th>";
+            echo "<th>Editor</th>";
+            echo "<th>Councillor</th>";
+            echo "<th>Edit</th></tr>";
+            foreach($results as $officer) {
+                $president = dvoc_assemble_member_name(dvoc_get_member_from_id($officer['president']));
+		$vicePresident = dvoc_assemble_member_name(dvoc_get_member_from_id($officer['vice_president']));
+		$secretary = dvoc_assemble_member_name(dvoc_get_member_from_id($officer['secretary']));
+		$treasurer = dvoc_assemble_member_name(dvoc_get_member_from_id($officer['treasurer']));
+		$editor = dvoc_assemble_member_name(dvoc_get_member_from_id($officer['editor']));
+		$council = dvoc_assemble_member_name(dvoc_get_member_from_id($officer['council']));
+                
+                $editUrl = admin_url("admin.php?page=dvoc-edit-officers&action=edit&officer_id=" . $officer['id'] , 'http');
+                echo "<tr>";
+                echo "<td>" . $officer['id'] . "</td>";
+                echo "<td>" . $officer['start_date'] . "</td>";
+                echo "<td>" . $officer['end_date'] . "</td>";
+                echo "<td>" . $president . "</td>";
+                echo "<td>" . $vicePresident . "</td>";
+                echo "<td>" . $secretary . "</td>";
+                echo "<td>" . $treasurer . "</td>";
+                echo "<td>" . $editor . "</td>";
+                echo "<td>" . $council . "</td>";
+                echo "<td><a href=\"" . $editUrl . "\">Edit</a></td>";
+                echo "</tr>";
+            }
+            echo "</table>";
+        ?>
+    </div>
+    <?php
+}
+
+function dvoc_list_officers() {
+    global $wpdb;
+    $table_name = $wpdb->prefix . "dvoc_officers";
+
+    $action = isset($_GET['action']) ? $_GET['action'] : '';
+    $officerId = isset($_GET['officer_id']) ? $_GET['officer_id'] : '';
+    if ($action === 'edit' && $committeeId != '') {
+        dvoc_edit_officers($officerId);
+        return;
+    }
+
+    /*$s = isset($_GET['s']) ? $_GET['s'] : '';
+    if ($s != '') {
+        $results = $wpdb->get_results("SELECT id, committee FROM $table_name WHERE committee LIKE '%$s%'", 'ARRAY_A');
+        dvoc_officers_display($results);
+        return;
+    }*/
+
+    $success = isset($_GET['success']) ? $_GET['success'] : '';
+    if ($success === '1') {
+    ?>
+        <div class="notice notice-success is-dismissible">
+            Officer added successfully
+        </div>
+    <?php
+    }
+
+    $results = $wpdb->get_results("SELECT id, start_date, end_date, president, vice_president, secretary, treasurer, editor, council FROM $table_name", 'ARRAY_A');
+    dvoc_officers_display($results);
+}
+
+function dvoc_edit_officers($officerId) {
+    $action = isset($_GET['action']) ? $_GET['action'] : '';
+    $officerId = isset($_GET['officer_id']) ? $_GET['officer_id'] : '';
+    
+    $memberId = '';
+    $name = '';
+    $startDate = date('Y-m-d');
+    $endDate = ''; $president = 0; $vicePresident = 0; $secretary = 0; $treasurer = 0; $editor = 0; $council = 0;
+    if ($action === 'edit' && $officerId !== '') {
+        global $wpdb;
+        $table_name = $wpdb->prefix . "dvoc_officers";
+        $table_name_2 = $wpdb->prefix . "dvoc_members";
+
+        $result = $wpdb->get_row("SELECT a.id, a.start_date, a.end_date, a.president, a.vice_president, a.secretary, a.treasurer, a.editor, a.council, b.id AS member_id, b.first_name, b.last_name FROM $table_name a JOIN $table_name_2 b ON (a.president = b.id OR a.vice_president = b.id OR a.secretary = b.id OR a.treasurer = b.id OR a.editor = b.id OR a.council = b.id) WHERE a.id = $officerId", 'ARRAY_A');
+
+        $startDate = date('Y-m-d', strtotime($result['start_date']));
+        if ($result['end_date'] && $result['end_date'] !== '0000-00-00 00:00:00') {
+            $endDate = date('Y-m-d', strtotime($result['end_date']));
+        }
+        $president = $result['president'];
+        $vicePresident = $result['vice_president'];
+        $secretary = $result['secretary'];
+        $treasurer = $result['treasurer'];
+        $editor = $result['editor'];
+        $council = $result['council'];
+
+        $memberId = $result['member_id'];
+        $name = $result['first_name'] . ' ' . $result['last_name'];
+    }
+
+
+    ?>
+    <div class="wrap">
+        <h2>Add / Edit Officer</h2>
+        <p>Member<br>
+        <span class="wpcf7-form-control-wrap name"><input type="text" id="dvoc-member-name" name="name" value="<?php echo $name; ?>" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
+        <div id="dvoc-list-member-names"></div>
+        <form action="<?php echo admin_url('admin-post.php');?>" method="post" class="wpcf7-form mailchimp-ext-0.4.29">
+            <input type="hidden" name="action" value="dvoc_add_officer"/>
+            <input type="hidden" name="id" id="dvoc-officer-id" value="<?php echo $officerId; ?>"/>
+            <input type="hidden" name="memberId" id="dvoc-member-id" value="<?php echo $memberId; ?>"/>
+            <p>Start Date
+            <span class="wpcf7-form-control-wrap startDate"><input type="text" name="startDate" value="<?php echo $startDate; ?>" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
+            <p>End Date
+            <span class="wpcf7-form-control-wrap endDate"><input type="text" name="endDate" value="<?php echo $endDate; ?>" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
+            <p><span class="wpcf7-form-control-wrap officer"><span class="wpcf7-form-control wpcf7-radio"><span class="wpcf7-list-item first last"><input type="radio" name="officer" value="president" <?php if ($president) { echo "checked"; } ?>> &nbsp;<span class="wpcf7-list-item-label">President</span></span></span></span></p>
+            <p><span class="wpcf7-form-control-wrap officer"><span class="wpcf7-form-control wpcf7-radio"><span class="wpcf7-list-item first last"><input type="radio" name="officer" value="vice_president" <?php if ($vicePresident) { echo "checked"; } ?>> &nbsp;<span class="wpcf7-list-item-label">Vice President</span></span></span></span></p>
+            <p><span class="wpcf7-form-control-wrap officer"><span class="wpcf7-form-control wpcf7-radio"><span class="wpcf7-list-item first last"><input type="radio" name="officer" value="secretary" <?php if ($secretary) { echo "checked"; } ?>> &nbsp;<span class="wpcf7-list-item-label">Secretary</span></span></span></span></p>
+            <p><span class="wpcf7-form-control-wrap officer"><span class="wpcf7-form-control wpcf7-radio"><span class="wpcf7-list-item first last"><input type="radio" name="officer" value="treasurer" <?php if ($treasurer) { echo "checked"; } ?>> &nbsp;<span class="wpcf7-list-item-label">Treasurer</span></span></span></span></p>
+            <p><span class="wpcf7-form-control-wrap officer"><span class="wpcf7-form-control wpcf7-radio"><span class="wpcf7-list-item first last"><input type="radio" name="officer" value="editor" <?php if ($editor) { echo "checked"; } ?>> &nbsp;<span class="wpcf7-list-item-label">Editor</span></span></span></span></p>
+            <p><span class="wpcf7-form-control-wrap officer"><span class="wpcf7-form-control wpcf7-radio"><span class="wpcf7-list-item first last"><input type="radio" name="officer" value="council <?php if ($council) { echo "checked"; } ?>"> &nbsp;<span class="wpcf7-list-item-label">Councillor</span></span></span></span></p>
+            <p><input type="submit" value="Add Officer" class="wpcf7-form-control wpcf7-submit"><img class="ajax-loader" src="http://dvoc.org/wp/wp-content/plugins/contact-form-7-mailchimp-extension/assets/images/fading-squares.gif" alt="Sending ..." style="visibility: hidden;"></p>
+        </form>
+    </div>
+    <?php
+}
+add_action('admin_post_dvoc_add_officer', 'dvoc_add_officer');
+
+function dvoc_add_officer() {
+    global $wpdb;
+    $table_name = $wpdb->prefix . "dvoc_officers";
+
+    $arr = array(
+        'start_date' => $_POST['startDate'],
+        'end_date' => isset($_POST['endDate']) ? $_POST['endDate'] : null,
+    );
+    $arr[$_POST['officer']] = $_POST['memberId'];
+    if (isset($_POST['id'])) {
+        $arr['id'] = $_POST['id'];
+    }
+
+    $result = $wpdb->replace(
+        $table_name,
+        $arr
+    );
+    if ($result === 1 || $result === 2) {
+        wp_redirect(admin_url("admin.php?page=dvoc-list-officers&success=$result", 'http'), 301);
+    } else {
+        wp_redirect(admin_url("admin.php?page=dvoc-edit-officers&success=$result", 'http'), 301);
+    }
+
 }
 
 function dvoc_cf7_integrate() {

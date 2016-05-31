@@ -25,5 +25,5 @@ jQuery(document).ready(function($) {
 function dvoc_member_select(id, name) {
     jQuery("#dvoc-member-name").val(name);
     jQuery("#dvoc-list-member-names").html('');
-    jQuery("#dvoc-committe-member").val(id);
+    jQuery("#dvoc-member-id").val(id);
 }
