@@ -20,6 +20,29 @@ jQuery(document).ready(function($) {
         });
     });
 
+    $("#officer-form").delegate("input[type=text]", "keyup", function() {
+        var officer = $(this).attr('name');
+
+        var searchTerm = $("#dvoc-" + officer + "-name").val();
+        if (searchTerm.length < 2) {
+            return '';
+        }
+        var data = {
+            'action': 'dvoc_search_member',
+            's': searchTerm
+        };
+        $.post(ajax_object.ajax_url, data, function(response) {
+            var ret = "";
+            response = JSON.parse(response);
+            for (var i = 0; i < response.length; i++) {
+                var member = response[i];
+                var fullName = member.first_name + ' ' + member.last_name;
+                ret += "<a class='dvoc-member-select' href='javascript:dvoc_member_select(" + member.id + ", \"" + fullName + "\");'>" + fullName + "</a>";
+            };
+            $("#dvoc-list-" + officer + "-names").html(ret);
+        });
+    });
+
 });
 
 function dvoc_member_select(id, name) {

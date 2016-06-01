@@ -62,14 +62,18 @@ function dvoc_create_officers_table() {
 
     $sql = "CREATE TABLE $table_name (
         id mediumint(6) NOT NULL AUTO_INCREMENT,
-	start_date datetime,
-	end_date datetime,
+        year smallint(4)
         president mediumint(6),
         vice_president mediumint(6),
         secretary mediumint(6),
         treasurer mediumint(6),
         editor mediumint(6),
-        council mediumint(6),
+        council1 mediumint(6),
+        council2 mediumint(6),
+        council3 mediumint(6),
+        council4 mediumint(6),
+        council5 mediumint(6),
+        council6 mediumint(6),
         UNIQUE KEY id (id)
     ) $charset_collate;";
 
@@ -351,7 +355,9 @@ function dvoc_get_member_names($s) {
     $table_name = $wpdb->prefix . "dvoc_members";
 
     if ($s != '') {
+        $wpdb->show_errors();
         $results = $wpdb->get_results("SELECT id, first_name, last_name FROM $table_name WHERE first_name LIKE '%$s%' OR last_name like '%$s%'", 'ARRAY_A');
+        $wpdb->print_error();
         return $results;
     }
     return "";
@@ -728,14 +734,18 @@ function dvoc_officers_display($results) {
             echo "<table>";
             echo "<tr>";
             echo "<th>Id</th>";
-            echo "<th>Start Date</th>";
-            echo "<th>End Date</th>";
+            echo "<th>Year</th>";
             echo "<th>President</th>";
             echo "<th>Vice President</th>";
             echo "<th>Secretary</th>";
             echo "<th>Treasurer</th>";
             echo "<th>Editor</th>";
-            echo "<th>Councillor</th>";
+            echo "<th>Councillor 1</th>";
+            echo "<th>Councillor 2</th>";
+            echo "<th>Councillor 3</th>";
+            echo "<th>Councillor 4</th>";
+            echo "<th>Councillor 5</th>";
+            echo "<th>Councillor 6</th>";
             echo "<th>Edit</th></tr>";
             foreach($results as $officer) {
                 $president = dvoc_assemble_member_name(dvoc_get_member_from_id($officer['president']));
@@ -743,19 +753,28 @@ function dvoc_officers_display($results) {
 		$secretary = dvoc_assemble_member_name(dvoc_get_member_from_id($officer['secretary']));
 		$treasurer = dvoc_assemble_member_name(dvoc_get_member_from_id($officer['treasurer']));
 		$editor = dvoc_assemble_member_name(dvoc_get_member_from_id($officer['editor']));
-		$council = dvoc_assemble_member_name(dvoc_get_member_from_id($officer['council']));
+		$council1 = dvoc_assemble_member_name(dvoc_get_member_from_id($officer['council1']));
+		$council2 = dvoc_assemble_member_name(dvoc_get_member_from_id($officer['council2']));
+		$council3 = dvoc_assemble_member_name(dvoc_get_member_from_id($officer['council3']));
+		$council4 = dvoc_assemble_member_name(dvoc_get_member_from_id($officer['council4']));
+		$council5 = dvoc_assemble_member_name(dvoc_get_member_from_id($officer['council5']));
+		$council6 = dvoc_assemble_member_name(dvoc_get_member_from_id($officer['council6']));
                 
                 $editUrl = admin_url("admin.php?page=dvoc-edit-officers&action=edit&officer_id=" . $officer['id'] , 'http');
                 echo "<tr>";
                 echo "<td>" . $officer['id'] . "</td>";
-                echo "<td>" . $officer['start_date'] . "</td>";
-                echo "<td>" . $officer['end_date'] . "</td>";
+                echo "<td>" . $officer['year'] . "</td>";
                 echo "<td>" . $president . "</td>";
                 echo "<td>" . $vicePresident . "</td>";
                 echo "<td>" . $secretary . "</td>";
                 echo "<td>" . $treasurer . "</td>";
                 echo "<td>" . $editor . "</td>";
-                echo "<td>" . $council . "</td>";
+                echo "<td>" . $council1 . "</td>";
+                echo "<td>" . $council2 . "</td>";
+                echo "<td>" . $council3 . "</td>";
+                echo "<td>" . $council4 . "</td>";
+                echo "<td>" . $council5 . "</td>";
+                echo "<td>" . $council6 . "</td>";
                 echo "<td><a href=\"" . $editUrl . "\">Edit</a></td>";
                 echo "</tr>";
             }
@@ -792,7 +811,7 @@ function dvoc_list_officers() {
     <?php
     }
 
-    $results = $wpdb->get_results("SELECT id, start_date, end_date, president, vice_president, secretary, treasurer, editor, council FROM $table_name", 'ARRAY_A');
+    $results = $wpdb->get_results("SELECT id, year, president, vice_president, secretary, treasurer, editor, council1, council2, council3, council4, council5, council6 FROM $table_name", 'ARRAY_A');
     dvoc_officers_display($results);
 }
 
@@ -802,51 +821,125 @@ function dvoc_edit_officers($officerId) {
     
     $memberId = '';
     $name = '';
-    $startDate = date('Y-m-d');
+    $year = date('Y');
     $endDate = ''; $president = 0; $vicePresident = 0; $secretary = 0; $treasurer = 0; $editor = 0; $council = 0;
     if ($action === 'edit' && $officerId !== '') {
         global $wpdb;
         $table_name = $wpdb->prefix . "dvoc_officers";
         $table_name_2 = $wpdb->prefix . "dvoc_members";
 
-        $result = $wpdb->get_row("SELECT a.id, a.start_date, a.end_date, a.president, a.vice_president, a.secretary, a.treasurer, a.editor, a.council, b.id AS member_id, b.first_name, b.last_name FROM $table_name a JOIN $table_name_2 b ON (a.president = b.id OR a.vice_president = b.id OR a.secretary = b.id OR a.treasurer = b.id OR a.editor = b.id OR a.council = b.id) WHERE a.id = $officerId", 'ARRAY_A');
+        $result = $wpdb->get_row("SELECT a.id, a.year, a.president, a.vice_president, a.secretary, a.treasurer, a.editor, a.council1, a.council2, a.council3, a.council4, a.council5, a.council6, b.id AS member_id, b.first_name, b.last_name FROM $table_name a JOIN $table_name_2 b ON (a.president = b.id OR a.vice_president = b.id OR a.secretary = b.id OR a.treasurer = b.id OR a.editor = b.id OR a.council = b.id) WHERE a.id = $officerId", 'ARRAY_A');
 
-        $startDate = date('Y-m-d', strtotime($result['start_date']));
-        if ($result['end_date'] && $result['end_date'] !== '0000-00-00 00:00:00') {
-            $endDate = date('Y-m-d', strtotime($result['end_date']));
+        $year = $result['year'];
+
+        $officers = array(
+	    'president' => array(
+                'id' => $result['president']
+            ),
+	    'vicePresident' => array(
+                'id' => $result['vicePresident']
+            ),
+	    'secretary' => array(
+                'id' => $result['secretary']
+            ),
+	    'treasurer' => array(
+                'id' => $result['treasurer']
+            ),
+	    'editor' => array(
+                'id' => $result['editor']
+            ),
+	    'council1' => array(
+                'id' => $result['council1']
+            ),
+	    'council2' => array(
+                'id' => $result['council2']
+            ),
+	    'council3' => array(
+                'id' => $result['council3']
+            ),
+	    'council4' => array(
+                'id' => $result['council4']
+            ),
+	    'council5' => array(
+                'id' => $result['council5']
+            ),
+	    'council6' => array(
+                'id' => $result['council6']
+            )
+        );
+        foreach ($officers as $key => $value) {
+            $memberResult = $wpdb->get_row("SELECT first_name, last_name FROM $table_name_2 WHERE id = " . $officers[$key]['id'], 'ARRAY_A');
+            $officers[$key]['name'] = $memberResult['first_name'] . ' ' . $memberResult['last_name'];
         }
-        $president = $result['president'];
-        $vicePresident = $result['vice_president'];
-        $secretary = $result['secretary'];
-        $treasurer = $result['treasurer'];
-        $editor = $result['editor'];
-        $council = $result['council'];
-
-        $memberId = $result['member_id'];
-        $name = $result['first_name'] . ' ' . $result['last_name'];
+ 
     }
 
 
     ?>
     <div class="wrap">
         <h2>Add / Edit Officer</h2>
-        <p>Member<br>
-        <span class="wpcf7-form-control-wrap name"><input type="text" id="dvoc-member-name" name="name" value="<?php echo $name; ?>" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
-        <div id="dvoc-list-member-names"></div>
-        <form action="<?php echo admin_url('admin-post.php');?>" method="post" class="wpcf7-form mailchimp-ext-0.4.29">
+        <form action="<?php echo admin_url('admin-post.php');?>" method="post" class="wpcf7-form mailchimp-ext-0.4.29" id="officer-form">
             <input type="hidden" name="action" value="dvoc_add_officer"/>
             <input type="hidden" name="id" id="dvoc-officer-id" value="<?php echo $officerId; ?>"/>
-            <input type="hidden" name="memberId" id="dvoc-member-id" value="<?php echo $memberId; ?>"/>
-            <p>Start Date
-            <span class="wpcf7-form-control-wrap startDate"><input type="text" name="startDate" value="<?php echo $startDate; ?>" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
-            <p>End Date
-            <span class="wpcf7-form-control-wrap endDate"><input type="text" name="endDate" value="<?php echo $endDate; ?>" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
-            <p><span class="wpcf7-form-control-wrap officer"><span class="wpcf7-form-control wpcf7-radio"><span class="wpcf7-list-item first last"><input type="radio" name="officer" value="president" <?php if ($president) { echo "checked"; } ?>> &nbsp;<span class="wpcf7-list-item-label">President</span></span></span></span></p>
-            <p><span class="wpcf7-form-control-wrap officer"><span class="wpcf7-form-control wpcf7-radio"><span class="wpcf7-list-item first last"><input type="radio" name="officer" value="vice_president" <?php if ($vicePresident) { echo "checked"; } ?>> &nbsp;<span class="wpcf7-list-item-label">Vice President</span></span></span></span></p>
-            <p><span class="wpcf7-form-control-wrap officer"><span class="wpcf7-form-control wpcf7-radio"><span class="wpcf7-list-item first last"><input type="radio" name="officer" value="secretary" <?php if ($secretary) { echo "checked"; } ?>> &nbsp;<span class="wpcf7-list-item-label">Secretary</span></span></span></span></p>
-            <p><span class="wpcf7-form-control-wrap officer"><span class="wpcf7-form-control wpcf7-radio"><span class="wpcf7-list-item first last"><input type="radio" name="officer" value="treasurer" <?php if ($treasurer) { echo "checked"; } ?>> &nbsp;<span class="wpcf7-list-item-label">Treasurer</span></span></span></span></p>
-            <p><span class="wpcf7-form-control-wrap officer"><span class="wpcf7-form-control wpcf7-radio"><span class="wpcf7-list-item first last"><input type="radio" name="officer" value="editor" <?php if ($editor) { echo "checked"; } ?>> &nbsp;<span class="wpcf7-list-item-label">Editor</span></span></span></span></p>
-            <p><span class="wpcf7-form-control-wrap officer"><span class="wpcf7-form-control wpcf7-radio"><span class="wpcf7-list-item first last"><input type="radio" name="officer" value="council <?php if ($council) { echo "checked"; } ?>"> &nbsp;<span class="wpcf7-list-item-label">Councillor</span></span></span></span></p>
+
+            <p>Year<br>
+            <span class="wpcf7-form-control-wrap year"><input type="text" name="year" value="<?php echo $year; ?>" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
+
+	    <p>President<br>
+            <input type="hidden" name="presidentId" id="dvoc-president-id" value="<?php echo $officers['president']['id']; ?>"/>
+	    <span class="wpcf7-form-control-wrap name"><input type="text" id="dvoc-president-name" name="president" value="<?php echo $officers['president']['name']; ?>" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
+	    <div id="dvoc-list-president-names"></div>
+
+	    <p>Vice President<br>
+            <input type="hidden" name="vicePresidentId" id="dvoc-vicepresident-id" value="<?php echo $officers['vicePresident']['id']; ?>"/>
+	    <span class="wpcf7-form-control-wrap name"><input type="text" id="dvoc-vicepresident-name" name="vice-president" value="<?php echo $officers['vicePresident']['name']; ?>" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
+	    <div id="dvoc-list-vice-president-names"></div>
+	    
+            <p>Secretary<br>
+            <input type="hidden" name="secretaryId" id="dvoc-secretary-id" value="<?php echo $officers['secretary']['id']; ?>"/>
+	    <span class="wpcf7-form-control-wrap name"><input type="text" id="dvoc-secretary-name" name="secretary" value="<?php echo $officers['secretary']['name']; ?>" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
+	    <div id="dvoc-list-secretary-names"></div>
+	    
+            <p>Treasurer<br>
+            <input type="hidden" name="treasurerId" id="dvoc-treasurer-id" value="<?php echo $officers['treasurer']['id']; ?>"/>
+	    <span class="wpcf7-form-control-wrap name"><input type="text" id="dvoc-treasurer-name" name="treasurer" value="<?php echo $officers['treasurer']['name']; ?>" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
+	    <div id="dvoc-list-treasurer-names"></div>
+
+	    <p>Editor<br>
+            <input type="hidden" name="editorId" id="dvoc-editor-id" value="<?php echo $officers['editor']['id']; ?>"/>
+	    <span class="wpcf7-form-control-wrap name"><input type="text" id="dvoc-editor-name" name="editor" value="<?php echo $officers['editor']['name']; ?>" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
+	    <div id="dvoc-list-editor-names"></div>
+
+	    <p>Councillor 1<br>
+            <input type="hidden" name="council1Id" id="dvoc-council1-id" value="<?php echo $officers['council1']['id']; ?>"/>
+	    <span class="wpcf7-form-control-wrap name"><input type="text" id="dvoc-council1-name" name="council1" value="<?php echo $officers['council1']['name']; ?>" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
+	    <div id="dvoc-list-council1-names"></div>
+
+	    <p>Councillor 2<br>
+            <input type="hidden" name="council2Id" id="dvoc-council2-id" value="<?php echo $officers['council2']['id']; ?>"/>
+	    <span class="wpcf7-form-control-wrap name"><input type="text" id="dvoc-council2-name" name="council2" value="<?php echo $officers['council2']['name']; ?>" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
+	    <div id="dvoc-list-council2-names"></div>
+
+	    <p>Councillor 3<br>
+            <input type="hidden" name="council3Id" id="dvoc-council3-id" value="<?php echo $officers['council3']['id']; ?>"/>
+	    <span class="wpcf7-form-control-wrap name"><input type="text" id="dvoc-council3-name" name="council3" value="<?php echo $officers['council3']['name']; ?>" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
+	    <div id="dvoc-list-council3-names"></div>
+
+	    <p>Councillor 4<br>
+            <input type="hidden" name="council4Id" id="dvoc-council4-id" value="<?php echo $officers['council4']['id']; ?>"/>
+	    <span class="wpcf7-form-control-wrap name"><input type="text" id="dvoc-council4-name" name="council4" value="<?php echo $officers['council4']['name']; ?>" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
+	    <div id="dvoc-list-council4-names"></div>
+
+	    <p>Councillor 5<br>
+            <input type="hidden" name="council5Id" id="dvoc-council5-id" value="<?php echo $officers['council5']['id']; ?>"/>
+	    <span class="wpcf7-form-control-wrap name"><input type="text" id="dvoc-council5-name" name="council5" value="<?php echo $officers['council5']['name']; ?>" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
+	    <div id="dvoc-list-council5-names"></div>
+
+	    <p>Councillor 6<br>
+            <input type="hidden" name="council6Id" id="dvoc-council6-id" value="<?php echo $officers['council6']['id']; ?>"/>
+	    <span class="wpcf7-form-control-wrap name"><input type="text" id="dvoc-council6-name" name="council6" value="<?php echo $officers['council6']['name']; ?>" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
+	    <div id="dvoc-list-council6-names"></div>
+
             <p><input type="submit" value="Add Officer" class="wpcf7-form-control wpcf7-submit"><img class="ajax-loader" src="http://dvoc.org/wp/wp-content/plugins/contact-form-7-mailchimp-extension/assets/images/fading-squares.gif" alt="Sending ..." style="visibility: hidden;"></p>
         </form>
     </div>
@@ -859,10 +952,19 @@ function dvoc_add_officer() {
     $table_name = $wpdb->prefix . "dvoc_officers";
 
     $arr = array(
-        'start_date' => $_POST['startDate'],
-        'end_date' => isset($_POST['endDate']) ? $_POST['endDate'] : null,
+        'year' => $_POST['year'],
+        'president' => isset($_POST['presidentId']) ? $_POST['presidentId'] : null,
+        'vice_president' => isset($_POST['vicePresidentId']) ? $_POST['vicePresidentId'] : null,
+        'secretary' => isset($_POST['secretaryId']) ? $_POST['secretaryId'] : null,
+        'treasurer' => isset($_POST['treasurerId']) ? $_POST['treasurerId'] : null,
+        'editor' => isset($_POST['editorId']) ? $_POST['editorId'] : null,
+        'council1' => isset($_POST['council1Id']) ? $_POST['council1Id'] : null,
+        'council2' => isset($_POST['council2Id']) ? $_POST['council2Id'] : null,
+        'council3' => isset($_POST['council3Id']) ? $_POST['council3Id'] : null,
+        'council4' => isset($_POST['council4Id']) ? $_POST['council4Id'] : null,
+        'council5' => isset($_POST['council5Id']) ? $_POST['council5Id'] : null,
+        'council6' => isset($_POST['council6Id']) ? $_POST['council6Id'] : null
     );
-    $arr[$_POST['officer']] = $_POST['memberId'];
     if (isset($_POST['id'])) {
         $arr['id'] = $_POST['id'];
     }
@@ -886,4 +988,4 @@ function dvoc_cf7_integrate() {
 }
 
 register_activation_hook(__FILE__, 'dvoc_init');
-register_deactivation_hook(__FILE__, 'dvoc_uninstall');
+//register_deactivation_hook(__FILE__, 'dvoc_uninstall');
