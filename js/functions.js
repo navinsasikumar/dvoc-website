@@ -37,7 +37,7 @@ jQuery(document).ready(function($) {
             for (var i = 0; i < response.length; i++) {
                 var member = response[i];
                 var fullName = member.first_name + ' ' + member.last_name;
-                ret += "<a class='dvoc-member-select' href='javascript:dvoc_member_select(" + member.id + ", \"" + fullName + "\");'>" + fullName + "</a>";
+                ret += "<a class='dvoc-officer-select' href='javascript:dvoc_officer_select(\"" + officer + "\", " + member.id + ", \"" + fullName + "\");'>" + fullName + "</a>";
             };
             $("#dvoc-list-" + officer + "-names").html(ret);
         });
@@ -49,4 +49,10 @@ function dvoc_member_select(id, name) {
     jQuery("#dvoc-member-name").val(name);
     jQuery("#dvoc-list-member-names").html('');
     jQuery("#dvoc-member-id").val(id);
+}
+
+function dvoc_officer_select(officer, id, name) {
+    jQuery("#dvoc-" + officer + "-name").val(name);
+    jQuery("#dvoc-list-" + officer + "-names").html('');
+    jQuery("#dvoc-" + officer + "-id").val(id);
 }

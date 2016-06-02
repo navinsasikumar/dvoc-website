@@ -355,9 +355,7 @@ function dvoc_get_member_names($s) {
     $table_name = $wpdb->prefix . "dvoc_members";
 
     if ($s != '') {
-        $wpdb->show_errors();
         $results = $wpdb->get_results("SELECT id, first_name, last_name FROM $table_name WHERE first_name LIKE '%$s%' OR last_name like '%$s%'", 'ARRAY_A');
-        $wpdb->print_error();
         return $results;
     }
     return "";
@@ -837,7 +835,7 @@ function dvoc_edit_officers($officerId) {
                 'id' => $result['president']
             ),
 	    'vicePresident' => array(
-                'id' => $result['vicePresident']
+                'id' => $result['vice_president']
             ),
 	    'secretary' => array(
                 'id' => $result['secretary']
@@ -868,8 +866,12 @@ function dvoc_edit_officers($officerId) {
             )
         );
         foreach ($officers as $key => $value) {
-            $memberResult = $wpdb->get_row("SELECT first_name, last_name FROM $table_name_2 WHERE id = " . $officers[$key]['id'], 'ARRAY_A');
-            $officers[$key]['name'] = $memberResult['first_name'] . ' ' . $memberResult['last_name'];
+            if (!$officers[$key]['id']) {
+                $officers[$key]['name'] = '';
+            } else {
+                $memberResult = $wpdb->get_row("SELECT first_name, last_name FROM $table_name_2 WHERE id = " . $officers[$key]['id'], 'ARRAY_A');
+                $officers[$key]['name'] = $memberResult['first_name'] . ' ' . $memberResult['last_name'];
+            }
         }
  
     }
@@ -891,8 +893,8 @@ function dvoc_edit_officers($officerId) {
 	    <div id="dvoc-list-president-names"></div>
 
 	    <p>Vice President<br>
-            <input type="hidden" name="vicePresidentId" id="dvoc-vicepresident-id" value="<?php echo $officers['vicePresident']['id']; ?>"/>
-	    <span class="wpcf7-form-control-wrap name"><input type="text" id="dvoc-vicepresident-name" name="vice-president" value="<?php echo $officers['vicePresident']['name']; ?>" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
+            <input type="hidden" name="vicePresidentId" id="dvoc-vice-president-id" value="<?php echo $officers['vicePresident']['id']; ?>"/>
+	    <span class="wpcf7-form-control-wrap name"><input type="text" id="dvoc-vice-president-name" name="vice-president" value="<?php echo $officers['vicePresident']['name']; ?>" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
 	    <div id="dvoc-list-vice-president-names"></div>
 	    
             <p>Secretary<br>
