@@ -88,7 +88,7 @@ function dvoc_create_awards_table() {
 
     $sql = "CREATE TABLE $table_name (
         id mediumint(6) NOT NULL AUTO_INCREMENT,
-	year smallint(4),
+        year smallint(4),
         devoc mediumint(6),
         stone mediumint(6),
         edge mediumint(6),
@@ -178,6 +178,8 @@ function dvoc_add_submenus() {
     add_submenu_page('dvoc-db', 'List Members', 'List Committees', 'manage_options', 'dvoc-list-committees', 'dvoc_list_committees');
     add_submenu_page('dvoc-db', 'Officers', 'Officers', 'manage_options', 'dvoc-list-officers', 'dvoc_list_officers');
     add_submenu_page('dvoc-db', 'Add Officers', 'Add Officers', 'manage_options', 'dvoc-edit-officers', 'dvoc_edit_officers');
+    add_submenu_page('dvoc-db', 'Awards', 'Awards', 'manage_options', 'dvoc-list-awards', 'dvoc_list_awards');
+    add_submenu_page('dvoc-db', 'Add Awards', 'Add Awards', 'manage_options', 'dvoc-edit-awards', 'dvoc_edit_awards');
 }
 
 add_action('admin_menu', 'dvoc_add_pages');
@@ -610,7 +612,7 @@ function dvoc_list_committee_members($committeeId) {
     global $wpdb;
     $table_name = $wpdb->prefix . "dvoc_committee_members";
     $table_name_2 = $wpdb->prefix . "dvoc_members";
-	
+
     $query = "SELECT a.start_date, a.end_date, a.committee_id, a.member_id, a.chairperson, b.first_name, b.last_name FROM $table_name AS a JOIN $table_name_2 AS b ON a.member_id = b.id WHERE a.committee_id = $committeeId";
     $results = $wpdb->get_results($query, 'ARRAY_A');
     return $results;
@@ -642,7 +644,7 @@ function dvoc_list_member_committees($memberId) {
     global $wpdb;
     $table_name = $wpdb->prefix . "dvoc_committee_members";
     $table_name_2 = $wpdb->prefix . "dvoc_committees";
-	
+
     $query = "SELECT a.start_date, a.end_date, a.committee_id, a.member_id, a.chairperson, b.committee FROM $table_name AS a JOIN $table_name_2 AS b ON a.committee_id = b.id WHERE a.member_id = $memberId";
     $results = $wpdb->get_results($query, 'ARRAY_A');
     return $results;
@@ -655,7 +657,7 @@ function dvoc_get_all_member_info($firstName, $lastName) {
     $result = $wpdb->get_row("SELECT id, first_name, last_name, email, bio, website, headline, start_date, end_date, status, fellow, life, honorary FROM $table_name WHERE first_name = '$firstName' AND last_name = '$lastName'", 'ARRAY_A');
     $committees = dvoc_list_member_committees($result['id']);
     $result['committees'] = $committees;
-    
+
     return $result;
 }
 
@@ -663,7 +665,7 @@ function dvoc_display_member_committees($member) {
     $ret = "";
     foreach($member['committees'] as $committee) {
         $ret .= $committee['committee'] . "<br>";
-    }    
+    }
     return $ret;
 }
 
@@ -684,7 +686,7 @@ function dvoc_shortcode_member_info($atts) {
         ),
         $atts
     );
- 
+
     if ($args['name'] === 'none') {
         $page = get_permalink();
         $pos = strpos($page, 'membership/members/');
@@ -757,7 +759,7 @@ function dvoc_officers_display($results) {
 		$council4 = dvoc_assemble_member_name(dvoc_get_member_from_id($officer['council4']));
 		$council5 = dvoc_assemble_member_name(dvoc_get_member_from_id($officer['council5']));
 		$council6 = dvoc_assemble_member_name(dvoc_get_member_from_id($officer['council6']));
-                
+
                 $editUrl = admin_url("admin.php?page=dvoc-edit-officers&action=edit&officer_id=" . $officer['id'] , 'http');
                 echo "<tr>";
                 echo "<td>" . $officer['id'] . "</td>";
@@ -816,7 +818,7 @@ function dvoc_list_officers() {
 function dvoc_edit_officers($officerId) {
     $action = isset($_GET['action']) ? $_GET['action'] : '';
     $officerId = isset($_GET['officer_id']) ? $_GET['officer_id'] : '';
-    
+
     $memberId = '';
     $name = '';
     $year = date('Y');
@@ -873,7 +875,7 @@ function dvoc_edit_officers($officerId) {
                 $officers[$key]['name'] = $memberResult['first_name'] . ' ' . $memberResult['last_name'];
             }
         }
- 
+
     }
 
 
@@ -896,12 +898,12 @@ function dvoc_edit_officers($officerId) {
             <input type="hidden" name="vicePresidentId" id="dvoc-vice-president-id" value="<?php echo $officers['vicePresident']['id']; ?>"/>
 	    <span class="wpcf7-form-control-wrap name"><input type="text" id="dvoc-vice-president-name" name="vice-president" value="<?php echo $officers['vicePresident']['name']; ?>" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
 	    <div id="dvoc-list-vice-president-names"></div>
-	    
+
             <p>Secretary<br>
             <input type="hidden" name="secretaryId" id="dvoc-secretary-id" value="<?php echo $officers['secretary']['id']; ?>"/>
 	    <span class="wpcf7-form-control-wrap name"><input type="text" id="dvoc-secretary-name" name="secretary" value="<?php echo $officers['secretary']['name']; ?>" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
 	    <div id="dvoc-list-secretary-names"></div>
-	    
+
             <p>Treasurer<br>
             <input type="hidden" name="treasurerId" id="dvoc-treasurer-id" value="<?php echo $officers['treasurer']['id']; ?>"/>
 	    <span class="wpcf7-form-control-wrap name"><input type="text" id="dvoc-treasurer-name" name="treasurer" value="<?php echo $officers['treasurer']['name']; ?>" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
@@ -983,6 +985,181 @@ function dvoc_add_officer() {
 
 }
 
+function dvoc_awards_display($results) {
+    ?>
+    <div class="wrap">
+        <h2>DVOC Awards</h2>
+        <?php show_search_box('awards'); ?>
+        <?php
+            echo "<table>";
+            echo "<tr>";
+            echo "<th>Id</th>";
+            echo "<th>Year</th>";
+            echo "<th>DEVOC</th>";
+            echo "<th>Witmer Stone</th>";
+            echo "<th>Julian Potter</th>";
+            echo "<th>Rosalie Edge</th>";
+            echo "<th>Edit</th></tr>";
+            foreach($results as $award) {
+                $devoc = dvoc_assemble_member_name(dvoc_get_member_from_id($award['devoc']));
+                $stone = dvoc_assemble_member_name(dvoc_get_member_from_id($award['stone']));
+                $potter = dvoc_assemble_member_name(dvoc_get_member_from_id($award['potter']));
+                $edge = dvoc_assemble_member_name(dvoc_get_member_from_id($award['edge']));
+
+                $editUrl = admin_url("admin.php?page=dvoc-edit-awards&action=edit&award_id=" . $award['id'] , 'http');
+                echo "<tr>";
+                echo "<td>" . $award['id'] . "</td>";
+                echo "<td>" . $award['year'] . "</td>";
+                echo "<td>" . $devoc . "</td>";
+                echo "<td>" . $stone . "</td>";
+                echo "<td>" . $potter . "</td>";
+                echo "<td>" . $edge. "</td>";
+                echo "<td><a href=\"" . $editUrl . "\">Edit</a></td>";
+                echo "</tr>";
+            }
+            echo "</table>";
+        ?>
+    </div>
+    <?php
+}
+
+function dvoc_list_awards() {
+    global $wpdb;
+    $table_name = $wpdb->prefix . "dvoc_awards";
+
+    $action = isset($_GET['action']) ? $_GET['action'] : '';
+    $awardId = isset($_GET['award_id']) ? $_GET['award_id'] : '';
+    if ($action === 'edit' && $awardId != '') {
+        dvoc_edit_awards($awardId);
+        return;
+    }
+
+    /*$s = isset($_GET['s']) ? $_GET['s'] : '';
+    if ($s != '') {
+        $results = $wpdb->get_results("SELECT id, committee FROM $table_name WHERE committee LIKE '%$s%'", 'ARRAY_A');
+        dvoc_awards_display($results);
+        return;
+    }*/
+
+    $success = isset($_GET['success']) ? $_GET['success'] : '';
+    if ($success === '1') {
+    ?>
+        <div class="notice notice-success is-dismissible">
+            Award added successfully
+        </div>
+    <?php
+    }
+
+    $results = $wpdb->get_results("SELECT id, year, devoc, stone, potter, edge FROM $table_name", 'ARRAY_A');
+    dvoc_awards_display($results);
+}
+
+function dvoc_edit_awards($awardId) {
+    $action = isset($_GET['action']) ? $_GET['action'] : '';
+    $awardId = isset($_GET['award_id']) ? $_GET['award_id'] : '';
+
+    $memberId = '';
+    $name = '';
+    $year = date('Y');
+    $devoc = 0; $vicePresident = 0; $secretary = 0; $treasurer = 0; $editor = 0; $council = 0;
+    if ($action === 'edit' && $awardId !== '') {
+        global $wpdb;
+        $table_name = $wpdb->prefix . "dvoc_awards";
+        $table_name_2 = $wpdb->prefix . "dvoc_members";
+
+        $result = $wpdb->get_row("SELECT id, year, devoc, stone, potter, edge FROM $table_name WHERE id = $awardId", 'ARRAY_A');
+
+        $year = $result['year'];
+
+        $awards = array(
+            'devoc' => array(
+                'id' => $result['devoc']
+            ),
+            'stone' => array(
+                'id' => $result['stone']
+            ),
+            'potter' => array(
+                'id' => $result['potter']
+            ),
+            'edge' => array(
+                'id' => $result['edge']
+            )
+        );
+        foreach ($awards as $key => $value) {
+            if (!$awards[$key]['id']) {
+                $awards[$key]['name'] = '';
+            } else {
+                $memberResult = $wpdb->get_row("SELECT first_name, last_name FROM $table_name_2 WHERE id = " . $awards[$key]['id'], 'ARRAY_A');
+                $awards[$key]['name'] = $memberResult['first_name'] . ' ' . $memberResult['last_name'];
+            }
+        }
+
+    }
+
+
+    ?>
+    <div class="wrap">
+        <h2>Add / Edit Award</h2>
+        <form action="<?php echo admin_url('admin-post.php');?>" method="post" class="wpcf7-form mailchimp-ext-0.4.29" id="award-form">
+            <input type="hidden" name="action" value="dvoc_add_award"/>
+            <input type="hidden" name="id" id="dvoc-award-id" value="<?php echo $awardId; ?>"/>
+
+            <p>Year<br>
+            <span class="wpcf7-form-control-wrap year"><input type="text" name="year" value="<?php echo $year; ?>" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
+
+            <p>DEVOC<br>
+            <input type="hidden" name="devocId" id="dvoc-devoc-id" value="<?php echo $awards['devoc']['id']; ?>"/>
+            <span class="wpcf7-form-control-wrap name"><input type="text" id="dvoc-devoc-name" name="devoc" value="<?php echo $awards['devoc']['name']; ?>" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
+            <div id="dvoc-list-devoc-names"></div>
+
+            <p>Witmer Stone<br>
+            <input type="hidden" name="stoneId" id="dvoc-stone-id" value="<?php echo $awards['stone']['id']; ?>"/>
+            <span class="wpcf7-form-control-wrap name"><input type="text" id="dvoc-stone-name" name="stone" value="<?php echo $awards['stone']['name']; ?>" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
+            <div id="dvoc-list-stone-names"></div>
+
+            <p>Julian K. Potter<br>
+            <input type="hidden" name="potterId" id="dvoc-potter-id" value="<?php echo $awards['potter']['id']; ?>"/>
+            <span class="wpcf7-form-control-wrap name"><input type="text" id="dvoc-potter-name" name="potter" value="<?php echo $awards['potter']['name']; ?>" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
+            <div id="dvoc-list-potter-names"></div>
+
+            <p>Rosalie Edge<br>
+            <input type="hidden" name="edgeId" id="dvoc-edge-id" value="<?php echo $awards['edge']['id']; ?>"/>
+            <span class="wpcf7-form-control-wrap name"><input type="text" id="dvoc-edge-name" name="edge" value="<?php echo $awards['edge']['name']; ?>" size="40" class="wpcf7-form-control wpcf7-text" aria-invalid="false" style="cursor: auto; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%; background-repeat: no-repeat;"></span> </p>
+            <div id="dvoc-list-edge-names"></div>
+
+            <p><input type="submit" value="Add Award" class="wpcf7-form-control wpcf7-submit"><img class="ajax-loader" src="http://dvoc.org/wp/wp-content/plugins/contact-form-7-mailchimp-extension/assets/images/fading-squares.gif" alt="Sending ..." style="visibility: hidden;"></p>
+        </form>
+    </div>
+    <?php
+}
+add_action('admin_post_dvoc_add_award', 'dvoc_add_award');
+
+function dvoc_add_award() {
+    global $wpdb;
+    $table_name = $wpdb->prefix . "dvoc_awards";
+
+    $arr = array(
+        'year' => $_POST['year'],
+        'devoc' => isset($_POST['devocId']) ? $_POST['devocId'] : null,
+        'stone' => isset($_POST['stoneId']) ? $_POST['stoneId'] : null,
+        'potter' => isset($_POST['potterId']) ? $_POST['potterId'] : null,
+        'edge' => isset($_POST['edgeId']) ? $_POST['edgeId'] : null,
+    );
+    if (isset($_POST['id'])) {
+        $arr['id'] = $_POST['id'];
+    }
+
+    $result = $wpdb->replace(
+        $table_name,
+        $arr
+    );
+    if ($result === 1 || $result === 2) {
+        wp_redirect(admin_url("admin.php?page=dvoc-list-awards&success=$result", 'http'), 301);
+    } else {
+        wp_redirect(admin_url("admin.php?page=dvoc-edit-awards&success=$result", 'http'), 301);
+    }
+
+}
 function dvoc_cf7_integrate() {
     require_once('DVOCIntegrationContactForm7.php');
     $integration = new DVOCIntegrationContactForm7();

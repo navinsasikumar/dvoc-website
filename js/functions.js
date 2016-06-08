@@ -43,6 +43,29 @@ jQuery(document).ready(function($) {
         });
     });
 
+    $("#award-form").delegate("input[type=text]", "keyup", function() {
+        var award = $(this).attr('name');
+
+        var searchTerm = $("#dvoc-" + award + "-name").val();
+        if (searchTerm.length < 2) {
+            return '';
+        }
+        var data = {
+            'action': 'dvoc_search_member',
+            's': searchTerm
+        };
+        $.post(ajax_object.ajax_url, data, function(response) {
+            var ret = "";
+            response = JSON.parse(response);
+            for (var i = 0; i < response.length; i++) {
+                var member = response[i];
+                var fullName = member.first_name + ' ' + member.last_name;
+                ret += "<a class='dvoc-award-select' href='javascript:dvoc_award_select(\"" + award + "\", " + member.id + ", \"" + fullName + "\");'>" + fullName + "</a>";
+            };
+            $("#dvoc-list-" + award + "-names").html(ret);
+        });
+    });
+
 });
 
 function dvoc_member_select(id, name) {
@@ -55,4 +78,10 @@ function dvoc_officer_select(officer, id, name) {
     jQuery("#dvoc-" + officer + "-name").val(name);
     jQuery("#dvoc-list-" + officer + "-names").html('');
     jQuery("#dvoc-" + officer + "-id").val(id);
+}
+
+function dvoc_award_select(award, id, name) {
+    jQuery("#dvoc-" + award + "-name").val(name);
+    jQuery("#dvoc-list-" + award + "-names").html('');
+    jQuery("#dvoc-" + award + "-id").val(id);
 }
